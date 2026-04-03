@@ -1,18 +1,18 @@
 --[[
-    FAKE VISUAL BAN BANNER SCRIPT (TERMINAL EDITION v2.0)
+    ROBLOX BAN TERMINAL (v3.0)
     Developer: @uginkbhai
     Repository: Ban-HUB
     
-    Description: A highly realistic fake visual ban script for Roblox with advanced features.
+    Description: A highly realistic ban terminal for Roblox with advanced features.
     Features:
-    - Enhanced Hacking Terminal Style GUI (Fancy & Real)
+    - Professional Hacking Terminal Style GUI with Minimize/Maximize
+    - Key System: 'diwas' to activate
     - Player Selection List
-    - Detailed Fake Injection & Firewall Bypass Messages with 1-2 minute delay
+    - Detailed Injection & Firewall Bypass Messages with 1-2 minute delay
     - "BANNED" overhead text above target player
     - Custom Ban Reason: "Destroyed By Uginkbhai"
     - Global Announcement: "Uginkbhai Banned Player {player username}"
-    - Character Disappear Animation (Visual Only)
-    - Realistic Ban Banner
+    - Character Disappear Animation
 ]]
 
 local Players = game:GetService("Players")
@@ -21,6 +21,10 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
+
+-- Configuration
+local ACCESS_KEY = "diwas"
+local BAN_DELAY_SECONDS = 90 -- 1.5 minutes
 
 -- Create a RemoteEvent for global announcements (if not already existing)
 local AnnounceEvent = ReplicatedStorage:FindFirstChild("BanHubAnnounce")
@@ -37,6 +41,58 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+-- Key Input Frame
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Name = "KeyFrame"
+KeyFrame.Size = UDim2.new(0, 300, 0, 150)
+KeyFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+KeyFrame.BorderSizePixel = 2
+KeyFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
+KeyFrame.Parent = ScreenGui
+
+local KeyLabel = Instance.new("TextLabel")
+KeyLabel.Size = UDim2.new(1, 0, 0.3, 0)
+KeyLabel.BackgroundTransparency = 1
+KeyLabel.Text = "ENTER ACCESS KEY"
+KeyLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+KeyLabel.Font = Enum.Font.Code
+KeyLabel.TextSize = 20
+KeyLabel.Parent = KeyFrame
+
+local KeyTextBox = Instance.new("TextBox")
+KeyTextBox.Size = UDim2.new(0.8, 0, 0.2, 0)
+KeyTextBox.Position = UDim2.new(0.5, -KeyTextBox.Size.X.Offset/2, 0.5, -KeyTextBox.Size.Y.Offset/2)
+KeyTextBox.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+KeyTextBox.BorderSizePixel = 1
+KeyTextBox.BorderColor3 = Color3.fromRGB(0, 150, 0)
+KeyTextBox.TextColor3 = Color3.fromRGB(0, 255, 0)
+KeyTextBox.Font = Enum.Font.Code
+KeyTextBox.TextSize = 16
+KeyTextBox.TextXAlignment = Enum.TextXAlignment.Center
+KeyTextBox.PlaceholderText = "Key..."
+KeyTextBox.Parent = KeyFrame
+
+local SubmitKeyButton = Instance.new("TextButton")
+SubmitKeyButton.Size = UDim2.new(0.4, 0, 0.2, 0)
+SubmitKeyButton.Position = UDim2.new(0.5, -SubmitKeyButton.Size.X.Offset/2, 0.75, 0)
+SubmitKeyButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+SubmitKeyButton.Text = "SUBMIT"
+SubmitKeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitKeyButton.Font = Enum.Font.Code
+SubmitKeyButton.TextSize = 16
+SubmitKeyButton.Parent = KeyFrame
+
+local InvalidKeyLabel = Instance.new("TextLabel")
+InvalidKeyLabel.Size = UDim2.new(1, 0, 0.2, 0)
+InvalidKeyLabel.Position = UDim2.new(0, 0, 0.9, 0)
+InvalidKeyLabel.BackgroundTransparency = 1
+InvalidKeyLabel.Text = ""
+InvalidKeyLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+InvalidKeyLabel.Font = Enum.Font.Code
+InvalidKeyLabel.TextSize = 14
+InvalidKeyLabel.Parent = KeyFrame
+
 -- Main Terminal Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
@@ -47,6 +103,7 @@ MainFrame.BorderSizePixel = 3
 MainFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.Visible = false -- Hidden until key is entered
 MainFrame.Parent = ScreenGui
 
 -- UI Corner for rounded edges
@@ -63,15 +120,43 @@ TitleBar.BorderSizePixel = 0
 TitleBar.Parent = MainFrame
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, -20, 1, 0)
+TitleLabel.Size = UDim2.new(1, -100, 1, 0)
 TitleLabel.Position = UDim2.new(0, 10, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "BAN-HUB TERMINAL v2.0 | Dev: @uginkbhai"
+TitleLabel.Text = "BAN-HUB TERMINAL v3.0 | Dev: @uginkbhai"
 TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Font = Enum.Font.Code
 TitleLabel.TextSize = 16
 TitleLabel.Parent = TitleBar
+
+-- Minimize Button
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 30, 1, 0)
+MinimizeButton.Position = UDim2.new(1, -90, 0, 0)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+MinimizeButton.Text = "_"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.Font = Enum.Font.Code
+MinimizeButton.TextSize = 18
+MinimizeButton.Parent = TitleBar
+MinimizeButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+-- Maximize Button (Toggle visibility)
+local MaximizeButton = Instance.new("TextButton")
+MaximizeButton.Size = UDim2.new(0, 30, 1, 0)
+MaximizeButton.Position = UDim2.new(1, -60, 0, 0)
+MaximizeButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+MaximizeButton.Text = "[]"
+MaximizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MaximizeButton.Font = Enum.Font.Code
+MaximizeButton.TextSize = 18
+MaximizeButton.Parent = TitleBar
+MaximizeButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
 
 -- Close Button
 local CloseButton = Instance.new("TextButton")
@@ -84,7 +169,7 @@ CloseButton.Font = Enum.Font.Code
 CloseButton.TextSize = 18
 CloseButton.Parent = TitleBar
 CloseButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
+    ScreenGui:Destroy()
 end)
 
 -- Terminal Output Area
@@ -197,11 +282,11 @@ function startFakeBan(targetPlayer)
     addLog("Firewall penetration successful. Access granted.", Color3.fromRGB(255, 0, 255), 1)
     addLog("Analyzing player data for vulnerabilities...", Color3.fromRGB(255, 165, 0), 1.2)
     addLog("Compiling ban command for " .. targetPlayer.Name .. "...", Color3.fromRGB(255, 165, 0), 1.5)
-    addLog("Executing BAN command in 60 seconds...", Color3.fromRGB(255, 255, 0), 1)
+    addLog("Executing BAN command in " .. BAN_DELAY_SECONDS .. " seconds...", Color3.fromRGB(255, 255, 0), 1)
     
     -- 1-2 minute delay with more logs
-    for i = 1, 10 do
-        addLog("Processing... " .. (60 - i*6) .. " seconds remaining.", Color3.fromRGB(0, 200, 0), 6)
+    for i = 1, BAN_DELAY_SECONDS / 10 do -- Log every 10 seconds
+        addLog("Processing... " .. (BAN_DELAY_SECONDS - i*10) .. " seconds remaining.", Color3.fromRGB(0, 200, 0), 10)
     end
     
     addLog("Finalizing ban sequence...", Color3.fromRGB(255, 0, 0), 1)
@@ -230,7 +315,7 @@ function startFakeBan(targetPlayer)
         game:GetService("Debris"):AddItem(billboardGui, 5) -- Remove after 5 seconds
     end
 
-    -- Visual Disappear Animation
+    -- Character Disappear Animation
     if targetPlayer.Character then
         for _, part in ipairs(targetPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") or part:IsA("Decal") or part:IsA("MeshPart") then
@@ -264,7 +349,7 @@ function startFakeBan(targetPlayer)
         targetPlayer.Character.Parent = nil
     end
     
-    addLog("PLAYER " .. targetPlayer.Name .. " HAS BEEN VISUALLY BANNED.", Color3.fromRGB(255, 0, 0), 0.5)
+    addLog("PLAYER " .. targetPlayer.Name .. " HAS BEEN BANNED.", Color3.fromRGB(255, 0, 0), 0.5)
     
     -- Global Announcement (local client triggers this)
     AnnounceEvent:FireServer(targetPlayer.Name)
@@ -294,9 +379,36 @@ function startFakeBan(targetPlayer)
 end
 
 -- Initial Setup
-addLog("BAN-HUB TERMINAL LOADED.", Color3.fromRGB(0, 255, 0), 0.5)
-addLog("Waiting for target selection...", Color3.fromRGB(200, 200, 200), 0.5)
-updatePlayerList()
+-- Intro Sequence
+local IntroLabel = Instance.new("TextLabel")
+IntroLabel.Size = UDim2.new(1, 0, 1, 0)
+IntroLabel.BackgroundTransparency = 1
+IntroLabel.Text = "Made By @uginkbhai"
+IntroLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+IntroLabel.Font = Enum.Font.Code
+IntroLabel.TextSize = 30
+IntroLabel.Parent = ScreenGui
+wait(3)
+IntroLabel:Destroy()
+
+KeyFrame.Visible = true
+
+SubmitKeyButton.MouseButton1Click:Connect(function()
+    if KeyTextBox.Text == ACCESS_KEY then
+        KeyFrame.Visible = false
+        MainFrame.Visible = true
+        addLog("Connecting to secure database...", Color3.fromRGB(0, 255, 255), 1)
+        addLog("Database connection established. Authenticating...", Color3.fromRGB(0, 255, 0), 1)
+        addLog("Authentication successful. Loading terminal...", Color3.fromRGB(0, 255, 0), 1)
+        addLog("BAN-HUB TERMINAL LOADED.", Color3.fromRGB(0, 255, 0), 0.5)
+        addLog("Waiting for target selection...", Color3.fromRGB(200, 200, 200), 0.5)
+        updatePlayerList()
+    else
+        InvalidKeyLabel.Text = "INVALID KEY!"
+        wait(2)
+        InvalidKeyLabel.Text = ""
+    end
+end)
 
 Players.PlayerAdded:Connect(updatePlayerList)
 Players.PlayerRemoving:Connect(updatePlayerList)
@@ -304,13 +416,16 @@ Players.PlayerRemoving:Connect(updatePlayerList)
 -- Toggle Key (Insert)
 UserInputService.InputBegan:Connect(function(input, gpe)
     if not gpe and input.KeyCode == Enum.KeyCode.Insert then
-        MainFrame.Visible = not MainFrame.Visible
+        if MainFrame.Visible then
+            MainFrame.Visible = false
+        elseif not KeyFrame.Visible then -- Only show if key is already entered
+            MainFrame.Visible = true
+        end
     end
 end)
 
 -- Server-side part for global announcement (This part needs to be in a Server Script)
 -- This client script will fire the event, and a server script will handle the announcement.
--- For a purely client-side script, the global announcement will only appear for the local player.
 -- To make it truly global, a server script is required to listen to AnnounceEvent.OnServerEvent
 -- and then use game:GetService("Chat"):Chat() to all players.
 
