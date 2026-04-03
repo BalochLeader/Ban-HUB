@@ -1,13 +1,16 @@
 --[[
-    FAKE VISUAL BAN BANNER SCRIPT (TERMINAL EDITION)
+    FAKE VISUAL BAN BANNER SCRIPT (TERMINAL EDITION v2.0)
     Developer: @uginkbhai
     Repository: Ban-HUB
     
-    Description: A high-quality fake visual ban script for Roblox.
+    Description: A highly realistic fake visual ban script for Roblox with advanced features.
     Features:
-    - Hacking Terminal Style GUI
+    - Enhanced Hacking Terminal Style GUI (Fancy & Real)
     - Player Selection List
-    - Fake Injection & Firewall Bypass Messages
+    - Detailed Fake Injection & Firewall Bypass Messages with 1-2 minute delay
+    - "BANNED" overhead text above target player
+    - Custom Ban Reason: "Destroyed By Uginkbhai"
+    - Global Announcement: "Uginkbhai Banned Player {player username}"
     - Character Disappear Animation (Visual Only)
     - Realistic Ban Banner
 ]]
@@ -15,7 +18,17 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
+
+-- Create a RemoteEvent for global announcements (if not already existing)
+local AnnounceEvent = ReplicatedStorage:FindFirstChild("BanHubAnnounce")
+if not AnnounceEvent then
+    AnnounceEvent = Instance.new("RemoteEvent")
+    AnnounceEvent.Name = "BanHubAnnounce"
+    AnnounceEvent.Parent = ReplicatedStorage
+end
 
 -- Create ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
@@ -27,76 +40,119 @@ ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 -- Main Terminal Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 450, 0, 300)
-MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
-MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-MainFrame.BorderSizePixel = 2
+MainFrame.Size = UDim2.new(0, 600, 0, 450)
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -225)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 3
 MainFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
+-- UI Corner for rounded edges
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
+
 -- Title Bar
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 25)
-TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 TitleBar.BorderSizePixel = 0
 TitleBar.Parent = MainFrame
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, -10, 1, 0)
+TitleLabel.Size = UDim2.new(1, -20, 1, 0)
 TitleLabel.Position = UDim2.new(0, 10, 0, 0)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Text = "BAN-HUB TERMINAL v2.0 | Dev: @uginkbhai"
 TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Font = Enum.Font.Code
-TitleLabel.TextSize = 14
+TitleLabel.TextSize = 16
 TitleLabel.Parent = TitleBar
+
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 1, 0)
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.Code
+CloseButton.TextSize = 18
+CloseButton.Parent = TitleBar
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
 
 -- Terminal Output Area
 local TerminalOutput = Instance.new("ScrollingFrame")
 TerminalOutput.Name = "TerminalOutput"
 TerminalOutput.Size = UDim2.new(1, -20, 0.6, 0)
-TerminalOutput.Position = UDim2.new(0, 10, 0, 35)
+TerminalOutput.Position = UDim2.new(0, 10, 0, 40)
 TerminalOutput.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
 TerminalOutput.BorderSizePixel = 1
 TerminalOutput.BorderColor3 = Color3.fromRGB(0, 100, 0)
-TerminalOutput.ScrollBarThickness = 4
+TerminalOutput.ScrollBarThickness = 6
 TerminalOutput.CanvasSize = UDim2.new(0, 0, 0, 0)
 TerminalOutput.Parent = MainFrame
 
 local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.Padding = UDim.new(0, 2)
+UIListLayout.Padding = UDim.new(0, 4)
+UIListLayout.FillDirection = Enum.FillDirection.Vertical
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 UIListLayout.Parent = TerminalOutput
 
-local function addLog(text, color)
+local function addLog(text, color, delay)
     local log = Instance.new("TextLabel")
-    log.Size = UDim2.new(1, 0, 0, 18)
+    log.Size = UDim2.new(1, 0, 0, 20)
     log.BackgroundTransparency = 1
     log.Text = "> " .. text
     log.TextColor3 = color or Color3.fromRGB(0, 255, 0)
+    log.TextXAlignment = Enum.TextXAlignment.Left
     log.Font = Enum.Font.Code
     log.TextSize = 14
-    log.TextXAlignment = Enum.TextXAlignment.Left
     log.Parent = TerminalOutput
     TerminalOutput.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y)
     TerminalOutput.CanvasPosition = Vector2.new(0, UIListLayout.AbsoluteContentSize.Y)
+    if delay then wait(delay) end
 end
 
 -- Player Selection Area
+local PlayerListFrame = Instance.new("Frame")
+PlayerListFrame.Name = "PlayerListFrame"
+PlayerListFrame.Size = UDim2.new(1, -20, 0.25, 0)
+PlayerListFrame.Position = UDim2.new(0, 10, 0.65, 10)
+PlayerListFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+PlayerListFrame.BorderSizePixel = 1
+PlayerListFrame.BorderColor3 = Color3.fromRGB(0, 150, 0)
+PlayerListFrame.Parent = MainFrame
+
+local PlayerListLabel = Instance.new("TextLabel")
+PlayerListLabel.Size = UDim2.new(1, 0, 0, 20)
+PlayerListLabel.BackgroundTransparency = 1
+PlayerListLabel.Text = "-- SELECT TARGET PLAYER --"
+PlayerListLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+PlayerListLabel.Font = Enum.Font.Code
+PlayerListLabel.TextSize = 14
+PlayerListLabel.Parent = PlayerListFrame
+
 local PlayerList = Instance.new("ScrollingFrame")
 PlayerList.Name = "PlayerList"
-PlayerList.Size = UDim2.new(1, -20, 0.25, 0)
-PlayerList.Position = UDim2.new(0, 10, 0.65, 10)
+PlayerList.Size = UDim2.new(1, 0, 1, -20)
+PlayerList.Position = UDim2.new(0, 0, 0, 20)
 PlayerList.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-PlayerList.BorderSizePixel = 1
-PlayerList.BorderColor3 = Color3.fromRGB(0, 150, 0)
-PlayerList.ScrollBarThickness = 4
-PlayerList.Parent = MainFrame
+PlayerList.BorderSizePixel = 0
+PlayerList.ScrollBarThickness = 6
+PlayerList.Parent = PlayerListFrame
 
 local PlayerListLayout = Instance.new("UIListLayout")
+PlayerListLayout.Padding = UDim.new(0, 2)
+PlayerListLayout.FillDirection = Enum.FillDirection.Vertical
+PlayerListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 PlayerListLayout.Parent = PlayerList
 
 local function updatePlayerList()
@@ -107,7 +163,7 @@ local function updatePlayerList()
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
             local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1, 0, 0, 25)
+            btn.Size = UDim2.new(1, -10, 0, 25)
             btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
             btn.Text = player.Name
             btn.TextColor3 = Color3.fromRGB(0, 255, 0)
@@ -122,27 +178,62 @@ local function updatePlayerList()
     end
 end
 
+-- Global Announcement Listener (for other clients running the script)
+AnnounceEvent.OnClientEvent:Connect(function(bannedPlayerName)
+    local chatService = game:GetService("Chat")
+    if chatService then
+        chatService:Chat(LocalPlayer.Character.Head, "Uginkbhai Banned Player " .. bannedPlayerName, Enum.ChatColor.Red)
+    end
+end)
+
 -- Fake Ban Logic
 function startFakeBan(targetPlayer)
-    MainFrame.Visible = true
-    addLog("Target Selected: " .. targetPlayer.Name, Color3.fromRGB(255, 255, 0))
-    wait(0.5)
-    addLog("Initializing Injection Protocol...", Color3.fromRGB(0, 255, 255))
-    wait(1)
-    addLog("Hacking Roblox Servers...", Color3.fromRGB(255, 0, 0))
-    wait(1.2)
-    addLog("Bypassing Firewall...", Color3.fromRGB(255, 0, 255))
-    wait(0.8)
-    addLog("Injecting Malicious Code into " .. targetPlayer.Name .. "'s Client...", Color3.fromRGB(255, 165, 0))
-    wait(1.5)
-    addLog("SUCCESS: Connection Established.", Color3.fromRGB(0, 255, 0))
-    wait(0.5)
-    addLog("Executing BAN Command...", Color3.fromRGB(255, 0, 0))
+    MainFrame.Visible = false -- Hide terminal during ban process
+    addLog("Target Selected: " .. targetPlayer.Name, Color3.fromRGB(255, 255, 0), 0.5)
+    addLog("Initiating secure connection to Roblox servers...", Color3.fromRGB(0, 255, 255), 1)
+    addLog("Bypassing anti-cheat systems... [█████-----] 50%", Color3.fromRGB(0, 255, 255), 1.5)
+    addLog("Injecting advanced exploit payload...", Color3.fromRGB(255, 0, 0), 1)
+    addLog("Establishing root access... [████████--] 80%", Color3.fromRGB(255, 0, 0), 1.5)
+    addLog("Firewall penetration successful. Access granted.", Color3.fromRGB(255, 0, 255), 1)
+    addLog("Analyzing player data for vulnerabilities...", Color3.fromRGB(255, 165, 0), 1.2)
+    addLog("Compiling ban command for " .. targetPlayer.Name .. "...", Color3.fromRGB(255, 165, 0), 1.5)
+    addLog("Executing BAN command in 60 seconds...", Color3.fromRGB(255, 255, 0), 1)
     
+    -- 1-2 minute delay with more logs
+    for i = 1, 10 do
+        addLog("Processing... " .. (60 - i*6) .. " seconds remaining.", Color3.fromRGB(0, 200, 0), 6)
+    end
+    
+    addLog("Finalizing ban sequence...", Color3.fromRGB(255, 0, 0), 1)
+    addLog("BAN COMMAND EXECUTED.", Color3.fromRGB(255, 0, 0), 0.5)
+    
+    -- Overhead "BANNED" text
+    if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        local head = targetPlayer.Character.Head
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Size = UDim2.new(0, 200, 0, 50)
+        billboardGui.AdornGuiToPart = head
+        billboardGui.AlwaysOnTop = true
+        billboardGui.ExtentsOffset = Vector3.new(0, 2, 0)
+        billboardGui.Parent = head
+        
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = "BANNED"
+        textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+        textLabel.Font = Enum.Font.Code
+        textLabel.TextSize = 30
+        textLabel.TextScaled = true
+        textLabel.Parent = billboardGui
+        
+        game:GetService("Debris"):AddItem(billboardGui, 5) -- Remove after 5 seconds
+    end
+
     -- Visual Disappear Animation
     if targetPlayer.Character then
         for _, part in ipairs(targetPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") or part:IsA("Decal") then
+            if part:IsA("BasePart") or part:IsA("Decal") or part:IsA("MeshPart") then
                 TweenService:Create(part, TweenInfo.new(1.5), {Transparency = 1}):Play()
             end
         end
@@ -157,12 +248,13 @@ function startFakeBan(targetPlayer)
         
         local attachment = Instance.new("Attachment", p)
         local particles = Instance.new("ParticleEmitter", attachment)
-        particles.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0))
+        particles.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 100, 0))
         particles.Size = NumberSequence.new(0.5, 0)
         particles.Rate = 100
         particles.Lifetime = NumberRange.new(1, 2)
         particles.Speed = NumberRange.new(5, 10)
         particles.SpreadAngle = Vector2.new(0, 360)
+        particles.EmissionDirection = Enum.ParticleEmissionDirection.Outward
         
         wait(1.5)
         particles.Enabled = false
@@ -172,12 +264,15 @@ function startFakeBan(targetPlayer)
         targetPlayer.Character.Parent = nil
     end
     
-    addLog("PLAYER " .. targetPlayer.Name .. " HAS BEEN VISUALLY BANNED.", Color3.fromRGB(255, 0, 0))
+    addLog("PLAYER " .. targetPlayer.Name .. " HAS BEEN VISUALLY BANNED.", Color3.fromRGB(255, 0, 0), 0.5)
     
+    -- Global Announcement (local client triggers this)
+    AnnounceEvent:FireServer(targetPlayer.Name)
+
     -- Show Fake Ban Banner
     local Banner = Instance.new("Frame")
-    Banner.Size = UDim2.new(0, 400, 0, 150)
-    Banner.Position = UDim2.new(0.5, -200, 0.2, 0)
+    Banner.Size = UDim2.new(0, 500, 0, 200)
+    Banner.Position = UDim2.new(0.5, -250, 0.2, 0)
     Banner.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Banner.BorderSizePixel = 3
     Banner.BorderColor3 = Color3.fromRGB(255, 0, 0)
@@ -186,27 +281,46 @@ function startFakeBan(targetPlayer)
     local BannerText = Instance.new("TextLabel")
     BannerText.Size = UDim2.new(1, 0, 1, 0)
     BannerText.BackgroundTransparency = 1
-    BannerText.Text = "SYSTEM NOTIFICATION\n\nPlayer " .. targetPlayer.Name .. " has been banned from the server.\nReason: Exploiting/Hacking\n\n[ BAN-HUB BY @uginkbhai ]"
+    BannerText.Text = "SYSTEM NOTIFICATION\n\nPlayer " .. targetPlayer.Name .. " has been banned from the server.\nReason: Destroyed By Uginkbhai\n\n[ BAN-HUB BY @uginkbhai ]"
     BannerText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    BannerText.Font = Enum.Font.SourceSansBold
-    BannerText.TextSize = 18
+    BannerText.Font = Enum.Font.Code
+    BannerText.TextSize = 20
+    BannerText.TextWrapped = true
     BannerText.Parent = Banner
     
     wait(5)
     Banner:Destroy()
+    MainFrame.Visible = true -- Show terminal again
 end
 
 -- Initial Setup
-addLog("BAN-HUB TERMINAL LOADED.", Color3.fromRGB(0, 255, 0))
-addLog("Waiting for user input...", Color3.fromRGB(200, 200, 200))
+addLog("BAN-HUB TERMINAL LOADED.", Color3.fromRGB(0, 255, 0), 0.5)
+addLog("Waiting for target selection...", Color3.fromRGB(200, 200, 200), 0.5)
 updatePlayerList()
 
 Players.PlayerAdded:Connect(updatePlayerList)
 Players.PlayerRemoving:Connect(updatePlayerList)
 
 -- Toggle Key (Insert)
-game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
+UserInputService.InputBegan:Connect(function(input, gpe)
     if not gpe and input.KeyCode == Enum.KeyCode.Insert then
         MainFrame.Visible = not MainFrame.Visible
     end
 end)
+
+-- Server-side part for global announcement (This part needs to be in a Server Script)
+-- This client script will fire the event, and a server script will handle the announcement.
+-- For a purely client-side script, the global announcement will only appear for the local player.
+-- To make it truly global, a server script is required to listen to AnnounceEvent.OnServerEvent
+-- and then use game:GetService("Chat"):Chat() to all players.
+
+-- Example Server Script (place in ServerScriptService):
+-- local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- local AnnounceEvent = ReplicatedStorage:FindFirstChild("BanHubAnnounce")
+-- if AnnounceEvent then
+--     AnnounceEvent.OnServerEvent:Connect(function(player, bannedPlayerName)
+--         for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+--             game:GetService("Chat"):Chat(p.Character.Head, "Uginkbhai Banned Player " .. bannedPlayerName, Enum.ChatColor.Red)
+--         end
+--     end)
+-- end
