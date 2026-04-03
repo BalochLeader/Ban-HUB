@@ -1,12 +1,12 @@
 --[[
-    ROBLOX BAN TERMINAL (v3.0)
+    ROBLOX BAN TERMINAL (v4.0)
     Developer: @uginkbhai
     Repository: Ban-HUB
     
     Description: A highly realistic ban terminal for Roblox with advanced features.
     Features:
-    - Professional Hacking Terminal Style GUI with Minimize/Maximize
-    - Key System: 'diwas' to activate
+    - Professional Hacking Terminal Style GUI with functional Minimize/Maximize
+    - Key System: 'diwas' to activate, kicks user on wrong key
     - Player Selection List
     - Detailed Injection & Firewall Bypass Messages with 1-2 minute delay
     - "BANNED" overhead text above target player
@@ -123,7 +123,7 @@ local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(1, -100, 1, 0)
 TitleLabel.Position = UDim2.new(0, 10, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "BAN-HUB TERMINAL v3.0 | Dev: @uginkbhai"
+TitleLabel.Text = "BAN-HUB TERMINAL v4.0 | Dev: @uginkbhai"
 TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Font = Enum.Font.Code
@@ -155,7 +155,7 @@ MaximizeButton.Font = Enum.Font.Code
 MaximizeButton.TextSize = 18
 MaximizeButton.Parent = TitleBar
 MaximizeButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
+    MainFrame.Visible = true
 end)
 
 -- Close Button
@@ -404,9 +404,9 @@ SubmitKeyButton.MouseButton1Click:Connect(function()
         addLog("Waiting for target selection...", Color3.fromRGB(200, 200, 200), 0.5)
         updatePlayerList()
     else
-        InvalidKeyLabel.Text = "INVALID KEY!"
+        InvalidKeyLabel.Text = "INVALID KEY! KICKING..."
         wait(2)
-        InvalidKeyLabel.Text = ""
+        LocalPlayer:Kick("Invalid Access Key. Connection Terminated.")
     end
 end)
 
