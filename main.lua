@@ -1,33 +1,60 @@
---!strict
+--[[
+    Ban Hub [BETA]
+    Developer: @uginkbhai
+    Type: Visual Prank Script
+    UI: Rayfield (Modern & Categorized)
+]]
 
--- Rayfield UI Library Initialization
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/UI-Library-Official/Rayfield/main/source"))()
+-- Ensure the script only runs once
+if getgenv().BanHubLoaded then
+    return
+end
+getgenv().BanHubLoaded = true
+
+-- Rayfield UI Library Loading with Error Handling
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source"))()
+end)
+
+if not success or not Rayfield then
+    -- Fallback to another source if the first one fails
+    success, Rayfield = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/UI-Library-Official/Rayfield/main/source"))()
+    end)
+end
+
+if not success or not Rayfield then
+    warn("Ban Hub: Failed to load Rayfield UI Library.")
+    return
+end
 
 local Window = Rayfield:CreateWindow({
     Name = "Ban Hub [BETA]",
-    Description = "Visually Prank Script by @uginkbhai",
-    Footer = {
-        Text = "Developed by @uginkbhai",
-        Color = Color3.fromRGB(255, 0, 0),
-        Transparency = 0.5,
+    LoadingTitle = "Ban Hub [BETA]",
+    LoadingSubtitle = "by @uginkbhai",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "BanHubConfig",
+        FileName = "BanHub"
     },
-    Draggable = true,
-    Resizable = true,
-    Blocking = false,
-    -- Size = Vector2.new(500, 400), -- Default size, can be adjusted
+    Discord = {
+        Enabled = false,
+        Invite = "",
+        RememberJoins = true
+    },
+    KeySystem = false, -- Set to true if you want a key system
 })
 
 -- Dashboard Tab
 local DashboardTab = Window:CreateTab("Dashboard", 4483362458)
+local DashboardSection = DashboardTab:CreateSection("Main Dashboard")
 
 DashboardTab:CreateLabel("Welcome, @uginkbhai", Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 0, 0))
 DashboardTab:CreateLabel("Status: Connected to Roblox Database (Fake)", Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 0, 0))
 
 local GlobalAnnouncements = DashboardTab:CreateParagraph({
     Name = "Global Announcements",
-    Content = "",
-    Color = Color3.fromRGB(255, 255, 255),
-    Transparency = 0.5,
+    Content = "Initializing fake ban feed...",
 })
 
 local fakeAnnouncements = {
@@ -39,21 +66,18 @@ local fakeAnnouncements = {
 }
 
 local announcementIndex = 1
-local function updateAnnouncements()
-    GlobalAnnouncements:Set("Global Announcements:\n" .. fakeAnnouncements[announcementIndex])
-    announcementIndex = announcementIndex % #fakeAnnouncements + 1
-end
-
-updateAnnouncements()
-coroutine.wrap(function()
+task.spawn(function()
     while true do
-        task.wait(5) -- Update every 5 seconds
-        updateAnnouncements()
+        if not getgenv().BanHubLoaded then break end
+        GlobalAnnouncements:Set("Global Announcements:\n" .. fakeAnnouncements[announcementIndex])
+        announcementIndex = announcementIndex % #fakeAnnouncements + 1
+        task.wait(5)
     end
-end)()
+end)
 
 -- Ban Panel Tab
 local BanPanelTab = Window:CreateTab("Ban Panel", 4483362458)
+local BanSection = BanPanelTab:CreateSection("Player Banning (Visual)")
 
 local targetPlayerDropdown = BanPanelTab:CreateDropdown({
     Name = "Select Player",
@@ -68,7 +92,9 @@ local function updatePlayerList()
     local players = game:GetService("Players"):GetPlayers()
     local playerNames = {}
     for _, player in ipairs(players) do
-        table.insert(playerNames, player.Name)
+        if player ~= game:GetService("Players").LocalPlayer then
+            table.insert(playerNames, player.Name)
+        end
     end
     targetPlayerDropdown:SetOptions(playerNames)
 end
@@ -93,15 +119,20 @@ BanPanelTab:CreateButton({
         local selectedReason = banReasonDropdown.CurrentOption
 
         if selectedPlayerName == "" then
-            Rayfield:Notify("Error", "Please select a player to ban.", 5)
+            Rayfield:Notify({
+                Title = "Error",
+                Content = "Please select a player to ban.",
+                Duration = 5,
+                Image = 4483362458,
+            })
             return
         end
 
-        Rayfield:Notify("Processing", "Connecting to Roblox Admin API...", 3)
+        Rayfield:Notify({Title = "Processing", Content = "Connecting to Roblox Admin API...", Duration = 2})
         task.wait(2)
-        Rayfield:Notify("Processing", "Bypassing 2FA...", 3)
+        Rayfield:Notify({Title = "Processing", Content = "Bypassing 2FA...", Duration = 2})
         task.wait(2)
-        Rayfield:Notify("Processing", "Injecting Ban Packet...", 3)
+        Rayfield:Notify({Title = "Processing", Content = "Injecting Ban Packet...", Duration = 2})
         task.wait(3)
 
         local targetPlayer = game:GetService("Players"):FindFirstChild(selectedPlayerName)
@@ -117,15 +148,21 @@ BanPanelTab:CreateButton({
                     end
                 end
             end
-            Rayfield:Notify("Success", selectedPlayerName .. " has been successfully banned from " .. game.Name .. ". Reason: " .. selectedReason, 5)
+            Rayfield:Notify({
+                Title = "Success",
+                Content = selectedPlayerName .. " has been successfully banned from " .. game.Name .. ". Reason: " .. selectedReason,
+                Duration = 5,
+                Image = 4483362458,
+            })
         else
-            Rayfield:Notify("Error", "Player not found or already 'banned'.", 5)
+            Rayfield:Notify({Title = "Error", Content = "Player not found or already 'banned'.", Duration = 5})
         end
     end,
 })
 
 -- Admin Tools Tab
 local AdminToolsTab = Window:CreateTab("Admin Tools", 4483362458)
+local ToolsSection = AdminToolsTab:CreateSection("Functional Tools")
 
 AdminToolsTab:CreateButton({
     Name = "Give Ban Hammer",
@@ -153,11 +190,11 @@ AdminToolsTab:CreateButton({
         mesh.Parent = handle
 
         banHammer.Activated:Connect(function()
-            local target = player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid:GetTarget()
-            if target and target.Parent and target.Parent:IsA("Model") then
+            local mouse = player:GetMouse()
+            local target = mouse.Target
+            if target and target.Parent and target.Parent:FindFirstChild("Humanoid") then
                 local targetPlayer = game:GetService("Players"):GetPlayerFromCharacter(target.Parent)
                 if targetPlayer then
-                    -- Trigger visual ban sequence for the hit player
                     local character = targetPlayer.Character
                     if character then
                         for _, part in ipairs(character:GetDescendants()) do
@@ -168,55 +205,51 @@ AdminToolsTab:CreateButton({
                             end
                         end
                     end
-                    Rayfield:Notify("Success", targetPlayer.Name .. " has been visually banned with the Ban Hammer!", 5)
+                    Rayfield:Notify({Title = "Success", Content = targetPlayer.Name .. " has been visually banned with the Ban Hammer!", Duration = 5})
                 end
             end
         end)
 
         banHammer.Parent = backpack
-        Rayfield:Notify("Info", "Ban Hammer added to your backpack!", 3)
+        Rayfield:Notify({Title = "Info", Content = "Ban Hammer added to your backpack!", Duration = 3})
     end,
 })
 
+local flying = false
 AdminToolsTab:CreateButton({
     Name = "Toggle Fly",
     Callback = function()
-        local player = game:GetService("Players").LocalPlayer
-        local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            if humanoid:GetState() == Enum.HumanoidStateType.Flying then
-                humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-                Rayfield:Notify("Info", "Fly disabled.", 3)
-            else
-                humanoid:ChangeState(Enum.HumanoidStateType.Flying)
-                Rayfield:Notify("Info", "Fly enabled.", 3)
-            end
-        end
-    end,
-})
-
-AdminToolsTab:CreateButton({
-    Name = "Toggle NoClip",
-    Callback = function()
+        flying = not flying
         local player = game:GetService("Players").LocalPlayer
         local character = player.Character
-        if character then
-            for _, part in ipairs(character:GetChildren()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = not part.CanCollide
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        
+        if flying then
+            Rayfield:Notify({Title = "Info", Content = "Fly enabled.", Duration = 3})
+            task.spawn(function()
+                local bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                bodyVelocity.Parent = character:FindFirstChild("HumanoidRootPart")
+                
+                while flying do
+                    bodyVelocity.Velocity = humanoid.MoveDirection * 50
+                    task.wait()
                 end
-            end
-            Rayfield:Notify("Info", "NoClip toggled.", 3)
+                bodyVelocity:Destroy()
+            end)
+        else
+            Rayfield:Notify({Title = "Info", Content = "Fly disabled.", Duration = 3})
         end
     end,
 })
 
 AdminToolsTab:CreateSlider({
     Name = "WalkSpeed",
-    Min = 16, -- Default Roblox walkspeed
+    Min = 16,
     Max = 100,
-    Current = 16,
-    Rounding = 0,
+    CurrentValue = 16,
+    Flag = "WalkSpeedSlider",
     Callback = function(value)
         local player = game:GetService("Players").LocalPlayer
         local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -226,23 +259,9 @@ AdminToolsTab:CreateSlider({
     end,
 })
 
-AdminToolsTab:CreateSlider({
-    Name = "JumpPower",
-    Min = 50, -- Default Roblox jumppower
-    Max = 200,
-    Current = 50,
-    Rounding = 0,
-    Callback = function(value)
-        local player = game:GetService("Players").LocalPlayer
-        local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.JumpPower = value
-        end
-    end,
-})
-
 -- Visual Pranks Tab
 local VisualPranksTab = Window:CreateTab("Visual Pranks", 4483362458)
+local PrankSection = VisualPranksTab:CreateSection("Extra Pranks")
 
 VisualPranksTab:CreateButton({
     Name = "Fake Console Log",
@@ -255,78 +274,53 @@ VisualPranksTab:CreateButton({
             "[HACKING] Data exfiltration in progress...",
         }
         local randomLog = consoleOutput[math.random(1, #consoleOutput)]
-        Rayfield:Notify("Fake Console", randomLog, 5)
-    end,
-})
-
-VisualPranksTab:CreateButton({
-    Name = "Fake Server Message",
-    Callback = function()
-        local player = game:GetService("Players").LocalPlayer
-        local chatService = game:GetService("Chat")
-        chatService:Chat(player.Character.Head, "[SERVER] This server is under maintenance. Expect lag spikes.", Enum.ChatColor.Red)
-        Rayfield:Notify("Info", "Fake server message sent to your chat.", 3)
-    end,
-})
-
-VisualPranksTab:CreateButton({
-    Name = "Play Random Emote",
-    Callback = function()
-        local player = game:GetService("Players").LocalPlayer
-        local emotes = game:GetService("Emotes")
-        local availableEmotes = emotes:GetEmotes(player)
-        if #availableEmotes > 0 then
-            local randomEmote = availableEmotes[math.random(1, #availableEmotes)]
-            emotes:PlayEmote(player, randomEmote.EmoteId)
-            Rayfield:Notify("Info", "Playing random emote: " .. randomEmote.Name, 3)
-        else
-            Rayfield:Notify("Warning", "No emotes found for your character.", 3)
-        end
+        Rayfield:Notify({Title = "Fake Console", Content = randomLog, Duration = 5})
     end,
 })
 
 -- Player Banner (Custom UI)
 local PlayerBannerScreenGui = Instance.new("ScreenGui")
 PlayerBannerScreenGui.Name = "PlayerBannerGui"
-PlayerBannerScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-PlayerBannerScreenGui.Enabled = false -- Hidden by default
+PlayerBannerScreenGui.Parent = game:GetService("CoreGui") -- Use CoreGui for better visibility
+PlayerBannerScreenGui.Enabled = false
 
 local PlayerBannerFrame = Instance.new("Frame")
-PlayerBannerFrame.Size = UDim2.new(0, 250, 0, 150)
-PlayerBannerFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
-PlayerBannerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-PlayerBannerFrame.BorderSizePixel = 0
+PlayerBannerFrame.Size = UDim2.new(0, 300, 0, 200)
+PlayerBannerFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+PlayerBannerFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+PlayerBannerFrame.BorderSizePixel = 2
+PlayerBannerFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
 PlayerBannerFrame.Active = true
 PlayerBannerFrame.Draggable = true
 PlayerBannerFrame.Parent = PlayerBannerScreenGui
 
 local PlayerNameLabel = Instance.new("TextLabel")
-PlayerNameLabel.Size = UDim2.new(1, 0, 0, 30)
-PlayerNameLabel.Position = UDim2.new(0, 0, 0, 10)
-PlayerNameLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+PlayerNameLabel.Size = UDim2.new(1, 0, 0, 40)
+PlayerNameLabel.Position = UDim2.new(0, 0, 0, 20)
+PlayerNameLabel.BackgroundTransparency = 1
 PlayerNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 PlayerNameLabel.Font = Enum.Font.SourceSansBold
-PlayerNameLabel.TextSize = 20
+PlayerNameLabel.TextSize = 24
 PlayerNameLabel.Text = "Player Name"
 PlayerNameLabel.Parent = PlayerBannerFrame
 
 local BanPlayerButton = Instance.new("TextButton")
-BanPlayerButton.Size = UDim2.new(0.8, 0, 0, 40)
+BanPlayerButton.Size = UDim2.new(0.8, 0, 0, 50)
 BanPlayerButton.Position = UDim2.new(0.1, 0, 0.6, 0)
-BanPlayerButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+BanPlayerButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 BanPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 BanPlayerButton.Font = Enum.Font.SourceSansBold
-BanPlayerButton.TextSize = 24
-BanPlayerButton.Text = "BAN"
+BanPlayerButton.TextSize = 28
+BanPlayerButton.Text = "BAN PLAYER"
 BanPlayerButton.Parent = PlayerBannerFrame
 
 local CloseBannerButton = Instance.new("TextButton")
-CloseBannerButton.Size = UDim2.new(0, 20, 0, 20)
-CloseBannerButton.Position = UDim2.new(1, -25, 0, 5)
-CloseBannerButton.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-CloseBannerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+CloseBannerButton.Size = UDim2.new(0, 30, 0, 30)
+CloseBannerButton.Position = UDim2.new(1, -35, 0, 5)
+CloseBannerButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+CloseBannerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBannerButton.Font = Enum.Font.SourceSansBold
-CloseBannerButton.TextSize = 16
+CloseBannerButton.TextSize = 20
 CloseBannerButton.Text = "X"
 CloseBannerButton.Parent = PlayerBannerFrame
 
@@ -336,31 +330,14 @@ end)
 
 BanPlayerButton.MouseButton1Click:Connect(function()
     local selectedPlayerName = PlayerNameLabel.Text
-    local selectedReason = "Player Banner Ban"
-
-    Rayfield:Notify("Processing", "Connecting to Roblox Admin API...", 3)
+    Rayfield:Notify({Title = "Processing", Content = "Connecting to Roblox Admin API...", Duration = 2})
     task.wait(2)
-    Rayfield:Notify("Processing", "Bypassing 2FA...", 3)
-    task.wait(2)
-    Rayfield:Notify("Processing", "Injecting Ban Packet...", 3)
-    task.wait(3)
-
     local targetPlayer = game:GetService("Players"):FindFirstChild(selectedPlayerName)
-    if targetPlayer then
-        -- Visual ban effect (client-side only)
-        local character = targetPlayer.Character
-        if character then
-            for _, part in ipairs(character:GetDescendants()) do
-                if part:IsA("BasePart") or part:IsA("Decal") or part:IsA("MeshPart") then
-                    part.Transparency = 1
-                    part.CanCollide = false
-                    part.CastShadow = false
-                end
-            end
+    if targetPlayer and targetPlayer.Character then
+        for _, part in ipairs(targetPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.Transparency = 1 part.CanCollide = false end
         end
-        Rayfield:Notify("Success", selectedPlayerName .. " has been successfully banned from " .. game.Name .. ". Reason: " .. selectedReason, 5)
-    else
-        Rayfield:Notify("Error", "Player not found or already 'banned'.", 5)
+        Rayfield:Notify({Title = "Success", Content = selectedPlayerName .. " has been visually banned!", Duration = 5})
     end
     PlayerBannerScreenGui.Enabled = false
 end)
@@ -370,7 +347,7 @@ VisualPranksTab:CreateButton({
     Callback = function()
         local selectedPlayerName = targetPlayerDropdown.CurrentOption
         if selectedPlayerName == "" then
-            Rayfield:Notify("Error", "Please select a player in the Ban Panel to show banner.", 5)
+            Rayfield:Notify({Title = "Error", Content = "Please select a player first.", Duration = 5})
             return
         end
         PlayerNameLabel.Text = selectedPlayerName
@@ -378,5 +355,9 @@ VisualPranksTab:CreateButton({
     end,
 })
 
--- Finalize UI
-Rayfield:Notify("Ban Hub [BETA]", "Script Loaded Successfully!", 5)
+Rayfield:Notify({
+    Title = "Ban Hub [BETA]",
+    Content = "Script Loaded Successfully!",
+    Duration = 5,
+    Image = 4483362458,
+})
